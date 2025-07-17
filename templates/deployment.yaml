@@ -1,48 +1,19 @@
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: wallabag-img
-  labels:
-    type: LocalVolume
-spec:
-  storageClassName: local-path
-  persistentVolumeReclaimPolicy: Delete
-  capacity:
-    storage: 10Gi
-  accessModes:
-    - ReadWriteMany
-  hostPath:
-    path: /wallabag-img
-    type: DirectoryOrCreate
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: wallabag-img
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: local-path
-  resources:
-    requests:
-      storage: 10Gi
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: wallabag
+  name: {{ .Chart.Name }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: wallabag
+      app: {{ .Chart.Name }}
   template:
     metadata:
       labels:
-        app: wallabag
+        app: {{ .Chart.Name }}
     spec:
       containers:
-        - name: wallabag
+        - name: {{ .Chart.Name }}
           image: wallabag/wallabag:2.6.13
           ports:
             - containerPort: 80

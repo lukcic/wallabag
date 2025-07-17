@@ -1,11 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: wallabag-redis
-
+  name: {{ .Chart.Name }}-redis
 spec:
   selector:
-    app: wallabag-redis
+    app: {{ .Chart.Name }}-redis
   ports:
     - protocol: TCP
       port: 6379
@@ -15,19 +14,17 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: wallabag-redis
+  name: {{ .Chart.Name }}-redis
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: wallabag-redis
+      app: {{ .Chart.Name }}-redis
   template:
     metadata:
       labels:
-        app: wallabag-redis
+        app: {{ .Chart.Name }}-redis
     spec:
-      # nodeSelector:
-      #   kubernetes.io/hostname: k3s-node1
       containers:
         - name: redis
           image: redis:alpine
