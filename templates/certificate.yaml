@@ -1,0 +1,11 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Chart.Name }}
+spec:
+  secretName: {{ .Chart.Name }}--ssl-cert
+  issuerRef:
+    name: cloudflare-cluster-issuer
+    kind: ClusterIssuer
+  dnsNames:
+    - {{ (first .Values.ingress.hosts).host }}
