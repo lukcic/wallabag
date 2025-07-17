@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: wallabag-redis
+
+spec:
+  selector:
+    app: wallabag-redis
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wallabag-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wallabag-redis
+  template:
+    metadata:
+      labels:
+        app: wallabag-redis
+    spec:
+      # nodeSelector:
+      #   kubernetes.io/hostname: k3s-node1
+      containers:
+        - name: redis
+          image: redis:alpine
+          ports:
+            - containerPort: 6379
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
