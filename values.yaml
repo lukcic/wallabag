@@ -1,9 +1,20 @@
-# Default values for wallabag.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
 # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
 replicaCount: 1
+
+# ---
+# apiVersion: cert-manager.io/v1
+# kind: Certificate
+# metadata:
+#   name: wallabag
+# spec:
+#   secretName: wallabag-lukcic-pl-ssl-cert
+#   issuerRef:
+#     name: cloudflare-cluster-issuer
+#     kind: ClusterIssuer
+#   dnsNames:
+#     - wallabag.lukcic.pl
+
+
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
@@ -12,6 +23,11 @@ image:
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "2.6.13"
+
+redis:
+  repository: redis
+  tag: alpine
+  port: 6379
 
 # This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
@@ -49,20 +65,20 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
 service:
-  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   type: ClusterIP
-  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
   port: 80
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
   enabled: false
   className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+  annotationsHttp:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-https-redirect@kubernetescrd    
   hosts:
     - host: wallabag.lukcic.pl
       paths:
@@ -73,51 +89,64 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+resources:
+  limits:
+    cpu: "2000m"
+    memory: "2Gi"
+  requests:
+    cpu: "1000m"
+    memory: "1Gi"
 
-# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
-livenessProbe:
-  httpGet:
-    path: /
-    port: http
-readinessProbe:
-  httpGet:
-    path: /
-    port: http
+config:
+  SYMFONY__ENV__DATABASE_DRIVER: pdo_pgsql
+  SYMFONY__ENV__DATABASE_HOST: "192.168.254.70"
+  SYMFONY__ENV__DATABASE_PORT: "5432"
+  SYMFONY__ENV__DATABASE_NAME: wallabag_test
+  SYMFONY__ENV__MAILER_DSN: smtp://127.0.0.1
+  SYMFONY__ENV__FROM_EMAIL: wallabag@example.com
+  SYMFONY__ENV__DOMAIN_NAME: https://wallabag.lukcic.pl
+  SYMFONY__ENV__SERVER_NAME: "lukcic's wallabag"
+  SYMFONY__ENV__REDIS_HOST: wallabag-redis
+  SYMFONY__ENV__DATABASE_TABLE_PREFIX: "wallabag_"
+  POPULATE_DATABASE: "false"
 
-# This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+secrets:
+  SYMFONY__ENV__DATABASE_USER: "d2FsbGFiYWc="
+  SYMFONY__ENV__DATABASE_PASSWORD: "d2FsbGFiYWc="
 
-# Additional volumes on the output Deployment definition.
-volumes: []
-# - name: foo
-#   secret:
-#     secretName: mysecret
-#     optional: false
+# # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+# livenessProbe:
+#   httpGet:
+#     path: /
+#     port: http
+# readinessProbe:
+#   httpGet:
+#     path: /
+#     port: http
 
-# Additional volumeMounts on the output Deployment definition.
-volumeMounts: []
-# - name: foo
-#   mountPath: "/etc/foo"
-#   readOnly: true
+# # This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
+# autoscaling:
+#   enabled: false
+#   minReplicas: 1
+#   maxReplicas: 100
+#   targetCPUUtilizationPercentage: 80
+#   # targetMemoryUtilizationPercentage: 80
 
-nodeSelector: {}
+# # Additional volumes on the output Deployment definition.
+# volumes: []
+# # - name: foo
+# #   secret:
+# #     secretName: mysecret
+# #     optional: false
 
-tolerations: []
+# # Additional volumeMounts on the output Deployment definition.
+# volumeMounts: []
+# # - name: foo
+# #   mountPath: "/etc/foo"
+# #   readOnly: true
 
-affinity: {}
+# nodeSelector: {}
+
+# tolerations: []
+
+# affinity: {}
